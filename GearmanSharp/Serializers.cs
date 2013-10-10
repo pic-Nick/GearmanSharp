@@ -32,7 +32,7 @@ namespace Twingly.Gearman
             if (data == null)
                 return null;
 
-            var jsonStr = JsonConvert.SerializeObject(data);
+            var jsonStr = JsonConvert.SerializeObject(data, Formatting.None, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
             return Encoding.UTF8.GetBytes(jsonStr);
         }
 
@@ -42,7 +42,7 @@ namespace Twingly.Gearman
                 return null;
 
             var jsonStr = Encoding.UTF8.GetString(data);
-            return JsonConvert.DeserializeObject<T>(jsonStr);
+            return JsonConvert.DeserializeObject<T>(jsonStr, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
         }
     }
 }
