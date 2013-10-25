@@ -10,6 +10,9 @@ namespace Twingly.Gearman
 {
     public class GearmanConnection : IGearmanConnection
     {
+        private readonly object _SyncObject = new object();
+        public object SyncObject { get { return this._SyncObject; } }
+
         public const int DEFAULT_SEND_TIMEOUT_MILLISECONDS = 3*1000;
         public const int DEFAULT_RECEIVE_TIMEOUT_MILLISECONDS = 60*1000;
 
@@ -63,33 +66,36 @@ namespace Twingly.Gearman
 
         public void Connect()
         {
-            if (IsConnected())
-                return;
-
-            Close();
-
-            try
+            lock (SyncObject)
             {
-                _socket = new SocketAdapter(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+                if (IsConnected())
+                    return;
+
+                Close();
+
+                try
                 {
-                    NoDelay = true,
-                    ReceiveTimeout = ReceiveTimeout,
-                    SendTimeout = SendTimeout
-                });
+                    _socket = new SocketAdapter(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+                    {
+                        NoDelay = true,
+                        ReceiveTimeout = ReceiveTimeout,
+                        SendTimeout = SendTimeout
+                    });
 
-                _socket.Connect(Host, Port);
-            }
-            catch (Exception ex)
-            {
-                throw new GearmanConnectionException("Could not connect", ex);
-            }
+                    _socket.Connect(Host, Port);
+                }
+                catch (Exception ex)
+                {
+                    throw new GearmanConnectionException("Could not connect", ex);
+                }
 
-            if (!_socket.Connected)
-            { 
-                throw new GearmanConnectionException("Socket not connected");
-            }
+                if (!_socket.Connected)
+                { 
+                    throw new GearmanConnectionException("Socket not connected");
+                }
             
-            _isDead = false;
+                _isDead = false;
+            }
         }
 
         public void Disconnect()
@@ -145,20 +151,23 @@ namespace Twingly.Gearman
 
         private void Close()
         {
-            if (_socket != null)
+            lock (SyncObject)
             {
-                try
+                if (_socket != null)
                 {
-                    _socket.Shutdown();
-                    _socket.Close();
-                }
-                catch (Exception)
-                {
-                    //logger.Error("Error shutting down and closing socket: " + EndPoint, e);
-                }
-                finally
-                {
-                    _socket = null;
+                    try
+                    {
+                        _socket.Shutdown();
+                        _socket.Close();
+                    }
+                    catch (Exception)
+                    {
+                        //logger.Error("Error shutting down and closing socket: " + EndPoint, e);
+                    }
+                    finally
+                    {
+                        _socket = null;
+                    }
                 }
             }
         }

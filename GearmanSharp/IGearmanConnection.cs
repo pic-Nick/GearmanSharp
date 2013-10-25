@@ -6,6 +6,7 @@ namespace Twingly.Gearman
 {
     public interface IGearmanConnection
     {
+        object SyncObject { get; }
         void Connect();
         void Disconnect();
         void SendPacket(RequestPacket p);

@@ -26,13 +26,16 @@ namespace Twingly.Gearman
 
         public GearmanJobInfo GrabJob()
         {
-            Connection.SendPacket(PackRequest(PacketType.GRAB_JOB));
-
             IResponsePacket response;
-            do
+            lock (Connection.SyncObject)
             {
-                response = Connection.GetNextPacket(); // Throw away all NOOPs.
-            } while (response.Type == PacketType.NOOP);
+                Connection.SendPacket(PackRequest(PacketType.GRAB_JOB));
+
+                do
+                {
+                    response = Connection.GetNextPacket(); // Throw away all NOOPs.
+                } while (response.Type == PacketType.NOOP);
+            }
 
             if (response.Type == PacketType.ERROR)
             {

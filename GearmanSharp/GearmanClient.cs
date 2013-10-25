@@ -117,6 +117,7 @@ namespace Twingly.Gearman
 
         protected T SendClientCommand<T>(Func<GearmanClientProtocol,T> commandFunc)
         {
+            Exception ex = null;
             foreach (var connection in GetAliveConnections())
             {
                 try
@@ -132,13 +133,14 @@ namespace Twingly.Gearman
                     proto.JobWarning += (o, e) => onJobWarning(e);
                     return commandFunc(proto);
                 }
-                catch (GearmanConnectionException)
+                catch (GearmanConnectionException e)
                 {
+                    ex = e;
                     connection.MarkAsDead();
                 }
             }
 
-            throw new NoServerAvailableException("Failed to send command, no job server available"); 
+            throw new NoServerAvailableException("Failed to send command, no job server available", ex); 
         }
         
         private static string CreateRandomUniqueId()

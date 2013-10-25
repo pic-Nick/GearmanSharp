@@ -111,7 +111,7 @@ namespace Twingly.Gearman
         protected IEnumerable<IGearmanConnection> GetAliveConnections()
         {
             var connections = _connections.Shuffle(new Random()).ToList();
-            var isAllDead = _connections.Where(conn => conn.IsDead()).Count() == _connections.Count;
+            var isAllDead = _connections.All(conn => conn.IsDead());
             var aliveConnections = new List<IGearmanConnection>();
 
             foreach (var connection in connections)
