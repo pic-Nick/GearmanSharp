@@ -46,8 +46,9 @@ namespace Twingly.Gearman
                 // swapped element because we already returned it.
             }
 
-            // there is one item remaining that was not returned - we return it now
-            yield return elements[0];
+            if (elements.Length > 0)
+                // there is one item remaining that was not returned - we return it now
+                yield return elements[0];
         }
     }
 }

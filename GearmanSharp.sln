@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GearmanSharp.Tests", "GearmanSharp.Tests\GearmanSharp.Tests.csproj", "{AF8300EC-7C8A-46FF-BC03-886C4ED7ECE2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GearmanSharp", "GearmanSharp\GearmanSharp.csproj", "{8B999000-26B7-4E65-9361-92785B249350}"
