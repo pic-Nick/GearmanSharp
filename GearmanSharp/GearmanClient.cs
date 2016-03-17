@@ -31,6 +31,29 @@ namespace Twingly.Gearman
         {
         }
 
+        public static GearmanClient CreateInstance(string servers) {
+          switch (servers) {
+            case null:
+              throw new ArgumentNullException("servers");
+            case "":
+              throw new ArgumentException("Parameter cann't be empty.", "servers");
+          }
+          GearmanClient jobServerCli = null;
+          var hosts = servers.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
+          if (hosts.Length > 0) {
+            jobServerCli = new GearmanClient();
+            foreach (var host in hosts) {
+              var parts = host.Split(':');
+              int port;
+              if (parts.Length == 2 && Int32.TryParse(parts[1], out port))
+                jobServerCli.AddServer(host, port);
+              else
+                jobServerCli.AddServer(host);
+            }
+          }
+          return jobServerCli;
+        }
+
         public GearmanJobStatus GetStatus(GearmanJobRequest jobRequest)
         {
             return new GearmanClientProtocol(jobRequest.Connection).GetStatus(jobRequest.JobHandle);
@@ -79,6 +102,10 @@ namespace Twingly.Gearman
         public GearmanJobRequest SubmitBackgroundJob(string functionName, byte[] functionArgument)
         {
             return SubmitBackgroundJob(functionName, functionArgument, CreateRandomUniqueId(), GearmanJobPriority.Normal);
+        }
+
+        public GearmanJobRequest SubmitBackgroundJob(string functionName, byte[] functionArgument, GearmanJobPriority priority) {
+          return SubmitBackgroundJob(functionName, functionArgument, CreateRandomUniqueId(), priority);
         }
 
         public GearmanJobRequest SubmitBackgroundJob(string functionName, byte[] functionArgument, string uniqueId, GearmanJobPriority priority)
@@ -136,7 +163,7 @@ namespace Twingly.Gearman
                 catch (GearmanConnectionException e)
                 {
                     ex = e;
-                    connection.MarkAsDead();
+                    //connection.MarkAsDead();
                 }
             }
 

@@ -14,7 +14,7 @@ namespace Twingly.Gearman
         public object SyncObject { get { return this._SyncObject; } }
 
         public const int DEFAULT_SEND_TIMEOUT_MILLISECONDS = 3*1000;
-        public const int DEFAULT_RECEIVE_TIMEOUT_MILLISECONDS = 60*1000;
+        public const int DEFAULT_RECEIVE_TIMEOUT_MILLISECONDS = 20*1000;
 
         private readonly TimeSpan _deadServerRetryInterval = TimeSpan.FromSeconds(10); // TODO: make configurable
 
