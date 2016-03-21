@@ -39,7 +39,7 @@ namespace Twingly.Gearman
 
             if (response.Type == PacketType.ERROR)
             {
-                throw UnpackErrorReponse(response);
+                throw UnpackErrorResponse(response);
             }
 
             GearmanJobInfo job;

@@ -16,7 +16,7 @@ namespace Twingly.Gearman
             Connection = connection;
         }
 
-        public static GearmanServerException UnpackErrorReponse(IResponsePacket response)
+        public static GearmanServerException UnpackErrorResponse(IResponsePacket response)
         {
             var args = Util.SplitArray(response.GetData());
             throw new GearmanServerException(Encoding.UTF8.GetString(args[0]), Encoding.UTF8.GetString(args[1]));
@@ -108,8 +108,8 @@ namespace Twingly.Gearman
             var args = Util.SplitArray(response.GetData());
             return new GearmanJobStatus(
                 Encoding.UTF8.GetString(args[0]),
-                uint.Parse(Encoding.UTF8.GetString(args[1])) == 0 ? false : true,
-                uint.Parse(Encoding.UTF8.GetString(args[2])) == 0 ? false : true,
+                uint.Parse(Encoding.UTF8.GetString(args[1])) != 0,
+                uint.Parse(Encoding.UTF8.GetString(args[2])) != 0,
                 uint.Parse(Encoding.UTF8.GetString(args[3])),
                 uint.Parse(Encoding.UTF8.GetString(args[4])));
         }
@@ -125,7 +125,11 @@ namespace Twingly.Gearman
             return UnpackWorkDataResponse(response);
         }
 
-        public static GearmanJobData UnpackWorkExceptionResponse(IResponsePacket response)
+        public static string UnpackWorkFailResponse(IResponsePacket response) {
+          return Encoding.UTF8.GetString(response.GetData());
+        }
+
+      public static GearmanJobData UnpackWorkExceptionResponse(IResponsePacket response)
         {
             return UnpackWorkDataResponse(response);
         }

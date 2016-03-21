@@ -62,7 +62,7 @@ namespace Twingly.Gearman
                     onJobCreated(new EventArgs());
                     return packet;
                 case PacketType.ERROR:
-                    throw UnpackErrorReponse(response);
+                    throw UnpackErrorResponse(response);
                 default:
                     throw new GearmanApiException("Got unknown packet from server");
             }
@@ -83,61 +83,68 @@ namespace Twingly.Gearman
             }
         }
 
-        public byte[] SubmitJob(string functionName, byte[] functionArgument, string uniqueId, GearmanJobPriority priority)
-        {
-            var result = new List<byte>();
-            var workDone = false;
-            lock (Connection.SyncObject)
-            {
-                var jobHandle = SubmitJob(functionName, functionArgument, false, uniqueId, priority);
+      public byte[] SubmitJob(string functionName, byte[] functionArgument, string uniqueId, GearmanJobPriority priority) {
+        var result = new List<byte>();
+        var workDone = false;
+        lock (Connection.SyncObject) {
+          var jobHandle = SubmitJob(functionName, functionArgument, false, uniqueId, priority);
 
-                while (!workDone)
-                {
-                    var response = Connection.GetNextPacket();
+          while (!workDone) {
+            var response = Connection.GetNextPacket();
 
-                    // TODO: Check that we received a response for/with the same job handle?
-
-                    switch (response.Type)
-                    {
-                        case PacketType.WORK_FAIL:
-                            onJobFailed(new EventArgs());
-                            return null;
-                        case PacketType.WORK_COMPLETE:
-                            var workComplete = UnpackWorkCompleteResponse(response);
-                            onJobCompleted(workComplete);
-                            result.AddRange(workComplete.Data);
-                            workDone = true;
-                            break;
-                        case PacketType.WORK_DATA:
-                            var workData = UnpackWorkDataResponse(response);
-                            onJobData(workData);
-                            result.AddRange(workData.Data);
-                            break;
-                        case PacketType.WORK_WARNING:
-						    // Protocol specs say treat this as a DATA packet, so we do
-                            var workWarning = UnpackWorkDataResponse(response);
-                            onJobWarning(workWarning);
-                            break;
-                        case PacketType.WORK_STATUS:
-                            var workStatus = UnpackStatusResponse(response);
-                            onJobStatus(workStatus);
-                            break;
-                        case PacketType.WORK_EXCEPTION:
-                            var workException = UnpackWorkExceptionResponse(response);
-                            onJobException(workException);
-                            break;
-                        case PacketType.ERROR:
-                            throw UnpackErrorReponse(response);
-                        default:
-                            throw new GearmanApiException("Got unknown packet from server");
-                    }   
+            switch (response.Type) {
+              case PacketType.WORK_FAIL:
+                var workFail = UnpackWorkFailResponse(response);
+                if (jobHandle == workFail) {
+                  onJobFailed(new EventArgs());
+                  return null;
                 }
-
-                return result.ToArray();
+                break;
+              case PacketType.WORK_COMPLETE:
+                var workComplete = UnpackWorkCompleteResponse(response);
+                if (jobHandle == workComplete.JobHandle) {
+                  onJobCompleted(workComplete);
+                  result.AddRange(workComplete.Data);
+                  workDone = true;
+                }
+                break;
+              case PacketType.WORK_DATA:
+                var workData = UnpackWorkDataResponse(response);
+                if (jobHandle == workData.JobHandle) {
+                  onJobData(workData);
+                  result.AddRange(workData.Data);
+                }
+                break;
+              case PacketType.WORK_WARNING:
+                // Protocol specs say treat this as a DATA packet, so we do
+                var workWarning = UnpackWorkDataResponse(response);
+                if (jobHandle == workWarning.JobHandle) {
+                  onJobWarning(workWarning);
+                  result.AddRange(workWarning.Data);
+                }
+                break;
+              case PacketType.WORK_STATUS:
+                var workStatus = UnpackStatusResponse(response);
+                if (jobHandle == workStatus.JobHandle)
+                  onJobStatus(workStatus);
+                break;
+              case PacketType.WORK_EXCEPTION:
+                var workException = UnpackWorkExceptionResponse(response);
+                if (jobHandle == workException.JobHandle)
+                  onJobException(workException);
+                break;
+              case PacketType.ERROR:
+                throw UnpackErrorResponse(response);
+              default:
+                throw new GearmanApiException("Got unknown packet from server");
             }
-        }
+          }
 
-        public GearmanJobStatus GetStatus(string jobHandle)
+          return result.ToArray();
+        }
+      }
+
+      public GearmanJobStatus GetStatus(string jobHandle)
         {
             IResponsePacket response;
             lock (Connection.SyncObject) {
@@ -151,7 +158,7 @@ namespace Twingly.Gearman
                     return UnpackStatusResponse(response);
                     // Raise the event?
                 case PacketType.ERROR:
-                    throw UnpackErrorReponse(response);
+                    throw UnpackErrorResponse(response);
                 default:
                     throw new GearmanApiException("Got unknown packet from server");
             }
