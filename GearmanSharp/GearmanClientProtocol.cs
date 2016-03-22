@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net.Sockets;
 using System.Text;
 using Twingly.Gearman.Exceptions;
 using Twingly.Gearman.Packets;
@@ -88,55 +89,63 @@ namespace Twingly.Gearman
         var workDone = false;
         lock (Connection.SyncObject) {
           var jobHandle = SubmitJob(functionName, functionArgument, false, uniqueId, priority);
+          var jobStatus = GetStatus(jobHandle);
+          while (!workDone && jobStatus.IsKnown) {
+            try {
+              var response = Connection.GetNextPacket();
 
-          while (!workDone) {
-            var response = Connection.GetNextPacket();
-
-            switch (response.Type) {
-              case PacketType.WORK_FAIL:
-                var workFail = UnpackWorkFailResponse(response);
-                if (jobHandle == workFail) {
-                  onJobFailed(new EventArgs());
-                  return null;
-                }
-                break;
-              case PacketType.WORK_COMPLETE:
-                var workComplete = UnpackWorkCompleteResponse(response);
-                if (jobHandle == workComplete.JobHandle) {
-                  onJobCompleted(workComplete);
-                  result.AddRange(workComplete.Data);
-                  workDone = true;
-                }
-                break;
-              case PacketType.WORK_DATA:
-                var workData = UnpackWorkDataResponse(response);
-                if (jobHandle == workData.JobHandle) {
-                  onJobData(workData);
-                  result.AddRange(workData.Data);
-                }
-                break;
-              case PacketType.WORK_WARNING:
-                // Protocol specs say treat this as a DATA packet, so we do
-                var workWarning = UnpackWorkDataResponse(response);
-                if (jobHandle == workWarning.JobHandle) {
-                  onJobWarning(workWarning);
-                  result.AddRange(workWarning.Data);
-                }
-                break;
-              case PacketType.WORK_STATUS:
-                var workStatus = UnpackStatusResponse(response);
-                if (jobHandle == workStatus.JobHandle)
-                  onJobStatus(workStatus);
-                break;
-              case PacketType.WORK_EXCEPTION:
-                var workException = UnpackWorkExceptionResponse(response);
-                if (jobHandle == workException.JobHandle)
-                  onJobException(workException);
-                break;
-              case PacketType.ERROR:
-                throw UnpackErrorResponse(response);
-              default:
-                throw new GearmanApiException("Got unknown packet from server");
+              switch (response.Type) {
+                case PacketType.WORK_FAIL:
+                  var workFail = UnpackWorkFailResponse(response);
+                  if (jobHandle == workFail) {
+                    onJobFailed(new EventArgs());
+                    return null;
+                  }
+                  break;
+                case PacketType.WORK_COMPLETE:
+                  var workComplete = UnpackWorkCompleteResponse(response);
+                  if (jobHandle == workComplete.JobHandle) {
+                    onJobCompleted(workComplete);
+                    result.AddRange(workComplete.Data);
+                    workDone = true;
+                  }
+                  break;
+                case PacketType.WORK_DATA:
+                  var workData = UnpackWorkDataResponse(response);
+                  if (jobHandle == workData.JobHandle) {
+                    onJobData(workData);
+                    result.AddRange(workData.Data);
+                  }
+                  break;
+                case PacketType.WORK_WARNING:
+                  // Protocol specs say treat this as a DATA packet, so we do
+                  var workWarning = UnpackWorkDataResponse(response);
+                  if (jobHandle == workWarning.JobHandle) {
+                    onJobWarning(workWarning);
+                    result.AddRange(workWarning.Data);
+                  }
+                  break;
+                case PacketType.WORK_STATUS:
+                  var workStatus = UnpackStatusResponse(response);
+                  if (jobHandle == workStatus.JobHandle)
+                    onJobStatus(workStatus);
+                  break;
+                case PacketType.WORK_EXCEPTION:
+                  var workException = UnpackWorkExceptionResponse(response);
+                  if (jobHandle == workException.JobHandle)
+                    onJobException(workException);
+                  break;
+                case PacketType.ERROR:
+                  throw UnpackErrorResponse(response);
+                default:
+                  throw new GearmanApiException("Got unknown packet from server");
+              }
+            } catch (GearmanConnectionException ex) {
+              var inner = ex.InnerException as SocketException;
+              if (inner != null && inner.SocketErrorCode == SocketError.TimedOut)
+                jobStatus = GetStatus(jobHandle);
+              if (inner == null || !jobStatus.IsKnown)
+                throw;
             }
           }
 
