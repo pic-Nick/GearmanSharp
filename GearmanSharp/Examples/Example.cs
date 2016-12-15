@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Newtonsoft.Json;
 
 namespace Twingly.Gearman.Examples
@@ -55,7 +56,7 @@ namespace Twingly.Gearman.Examples
             var urls = new List<string> { "http://www.youtube.com/watch?v=abc123456", "http://www.youtube.com/watch?v=xyz9876" };
             
             var oembeds = client.SubmitJob<IList<string>, IList<OEmbed>>("GetOEmbeds", urls,
-                Serializers.JsonSerialize<IList<string>>, Serializers.JsonDeserialize<IList<OEmbed>>);
+                Serializers.JsonSerialize<IList<string>>, Serializers.JsonDeserialize<IList<OEmbed>>, Timeout.Infinite);
         }
 
         public void SimpleWorker()

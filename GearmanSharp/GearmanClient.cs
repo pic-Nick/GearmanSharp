@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Twingly.Gearman.Configuration;
 using Twingly.Gearman.Exceptions;
 
@@ -66,21 +67,25 @@ namespace Twingly.Gearman
 
         public byte[] SubmitJob(string functionName, byte[] functionArgument, string uniqueId, GearmanJobPriority priority)
         {
-            return SubmitJob<byte[], byte[]>(functionName, functionArgument, Guid.NewGuid().ToString(), GearmanJobPriority.Normal,
-                data => (data), data => (data));
+            return SubmitJob(functionName, functionArgument, uniqueId, priority, Timeout.Infinite);
+        }
+
+        public byte[] SubmitJob(string functionName, byte[] functionArgument, string uniqueId, GearmanJobPriority priority, long timeout) {
+          return SubmitJob<byte[], byte[]>(functionName, functionArgument, uniqueId, priority,
+              data => (data), data => (data), timeout);
         }
 
         public TResult SubmitJob<TArg, TResult>(string functionName, TArg functionArgument,
-            DataSerializer<TArg> argumentSerializer, DataDeserializer<TResult> resultDeserializer)
+            DataSerializer<TArg> argumentSerializer, DataDeserializer<TResult> resultDeserializer, long timeout)
             where TArg : class
             where TResult : class
         {
             return SubmitJob<TArg, TResult>(functionName, functionArgument, Guid.NewGuid().ToString(), GearmanJobPriority.Normal,
-                argumentSerializer, resultDeserializer);
+                argumentSerializer, resultDeserializer, timeout);
         }
 
         public TResult SubmitJob<TArg, TResult>(string functionName, TArg functionArgument, string uniqueId, GearmanJobPriority priority,
-            DataSerializer<TArg> argumentSerializer, DataDeserializer<TResult> resultDeserializer)
+            DataSerializer<TArg> argumentSerializer, DataDeserializer<TResult> resultDeserializer, long timeout)
             where TArg : class
             where TResult : class
         {
@@ -95,7 +100,8 @@ namespace Twingly.Gearman
                 functionName,
                 functionArgumentBytes,
                 uniqueId,
-                priority));
+                priority,
+                timeout));
             return result == null ? null : resultDeserializer(result);
         }
 

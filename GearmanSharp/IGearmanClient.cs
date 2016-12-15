@@ -8,14 +8,15 @@ namespace Twingly.Gearman
 
         byte[] SubmitJob(string functionName, byte[] functionArgument);
         byte[] SubmitJob(string functionName, byte[] functionArgument, string uniqueId, GearmanJobPriority priority);
+        byte[] SubmitJob(string functionName, byte[] functionArgument, string uniqueId, GearmanJobPriority priority, long timeout);
 
         TResult SubmitJob<TArg, TResult>(string functionName, TArg functionArgument,
-            DataSerializer<TArg> argumentSerializer, DataDeserializer<TResult> resultDeserializer)
+            DataSerializer<TArg> argumentSerializer, DataDeserializer<TResult> resultDeserializer, long timeout)
             where TArg : class
             where TResult : class;
 
         TResult SubmitJob<TArg, TResult>(string functionName, TArg functionArgument, string uniqueId, GearmanJobPriority priority,
-            DataSerializer<TArg> argumentSerializer, DataDeserializer<TResult> resultDeserializer)
+            DataSerializer<TArg> argumentSerializer, DataDeserializer<TResult> resultDeserializer, long timeout)
             where TArg : class
             where TResult : class;
 

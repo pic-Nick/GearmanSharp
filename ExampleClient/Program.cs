@@ -32,7 +32,7 @@ namespace ExampleClient
             for (int i = 0; i < jobCount; i++)
             {
                 var result = client.SubmitJob<string, string>("reverse", String.Format("{0}: Hello World", i),
-                    Serializers.UTF8StringSerialize, Serializers.UTF8StringDeserialize);
+                    Serializers.UTF8StringSerialize, Serializers.UTF8StringDeserialize, Timeout.Infinite);
                 Console.WriteLine("Job result: {0}", result);
             }
         }
