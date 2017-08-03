@@ -89,7 +89,29 @@ namespace Twingly.Gearman
             AddConnection(ConnectionFactory.CreateConnection(host, port));
         }
 
-        public void DisconnectAll()
+      public bool AddServers(string hosts) {
+      switch (hosts) {
+        case null:
+          throw new ArgumentNullException("hosts");
+        case "":
+          throw new ArgumentException("Parameter cann't be empty.", "hosts");
+      }
+      var hostsArr = hosts.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
+      if (hostsArr.Length > 0) {
+        foreach (var host in hostsArr) {
+          var parts = host.Split(':');
+          int port;
+          if (parts.Length == 2 && Int32.TryParse(parts[1], out port))
+            this.AddServer(host, port);
+          else
+            this.AddServer(host);
+        }
+        return true;
+      }
+        return false;
+      }
+
+    public void DisconnectAll()
         {
             foreach (var connection in _connections)
             {
@@ -108,19 +130,21 @@ namespace Twingly.Gearman
             _connections.Add(connection);
         }
 
-        protected IEnumerable<IGearmanConnection> GetAliveConnections()
+        protected IEnumerable<IGearmanConnection> GetAliveConnections(bool blockingMode)
         {
             var connections = _connections.Shuffle(new Random()).ToList();
             var isAllDead = _connections.All(conn => conn.IsDead());
             var aliveConnections = new List<IGearmanConnection>();
 
-            foreach (var connection in connections)
-            {
+            foreach (var connection in connections) {
+                if (connection.BlockingMode != blockingMode)
+                    connection.Disconnect();
+
                 // Try to reconnect if they're not connected and not dead, or if all servers are dead, we will try to reconnect them anyway.
                 if (!connection.IsConnected() && (!connection.IsDead() || isAllDead))
                 {
-                    try
-                    {
+                    try {
+                        connection.BlockingMode = blockingMode;
                         connection.Connect();
                         OnConnectionConnected(connection);
 
@@ -128,10 +152,10 @@ namespace Twingly.Gearman
                         // client and the worker, where the worker always registers all functions when connecting?
                         // Could that work?
                     }
-                    catch (GearmanConnectionException)
+                    catch (GearmanConnectionException ex)
                     {
                         // Is it enough to catch GearmanConnectionException?
-                        connection.MarkAsDead();
+            connection.MarkAsDead();
                         continue;
                     }
                 }
@@ -143,6 +167,10 @@ namespace Twingly.Gearman
             }
 
             return aliveConnections;
+        }
+
+        protected IEnumerable<IGearmanConnection> GetAliveConnections() {
+          return GetAliveConnections(true);
         }
 
         protected virtual void OnConnectionConnected(IGearmanConnection connection)

@@ -16,6 +16,7 @@ namespace Twingly.Gearman
 
         string Host { get; }
         int Port { get; }
+        bool BlockingMode { get; set; }
 
         bool IsDead(); // A dead connection should not be retried. When it's time to retry, it won't be dead.
         void MarkAsDead();

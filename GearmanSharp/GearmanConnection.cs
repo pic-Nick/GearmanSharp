@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using Twingly.Gearman.Exceptions;
 using Twingly.Gearman.Packets;
 
@@ -36,6 +36,7 @@ namespace Twingly.Gearman
 
         public string Host { get; set; }
         public int Port { get; set; }
+        public bool BlockingMode { get; set; }
 
         public GearmanConnection(string host, int port)
         {
@@ -44,6 +45,7 @@ namespace Twingly.Gearman
 
             Host = host;
             Port = port;
+            BlockingMode = true;
             SendTimeout = DEFAULT_SEND_TIMEOUT_MILLISECONDS;
             ReceiveTimeout = DEFAULT_RECEIVE_TIMEOUT_MILLISECONDS;
             _isDead = false;
@@ -79,7 +81,8 @@ namespace Twingly.Gearman
                     {
                         NoDelay = true,
                         ReceiveTimeout = ReceiveTimeout,
-                        SendTimeout = SendTimeout
+                        SendTimeout = SendTimeout,
+                        Blocking = BlockingMode
                     });
 
                     _socket.Connect(Host, Port);
@@ -111,7 +114,7 @@ namespace Twingly.Gearman
             }
             catch (Exception e)
             {
-                new GearmanConnectionException("Unable to send packet", e);
+                throw new GearmanConnectionException("Unable to send packet", e);
             }
         }
 

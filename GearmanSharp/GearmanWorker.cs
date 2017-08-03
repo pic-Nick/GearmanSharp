@@ -22,6 +22,7 @@ namespace Twingly.Gearman
 
         private string _clientId = null;
         private readonly IDictionary<string, FunctionInformation> _functionInformation = new Dictionary<string, FunctionInformation>();
+      protected GearmanWorkerOptions Options;
 
         public GearmanWorker()
         {
@@ -43,7 +44,7 @@ namespace Twingly.Gearman
                 throw new ArgumentNullException("clientId");
 
             _clientId = clientId;
-            foreach (var connection in GetAliveConnections())
+            foreach (var connection in GetAliveConnections((this.Options & GearmanWorkerOptions.GEARMAN_WORKER_NON_BLOCKING) != GearmanWorkerOptions.GEARMAN_WORKER_NON_BLOCKING))
             {
                 SetClientId(connection);
             }
@@ -73,7 +74,7 @@ namespace Twingly.Gearman
 
             AddFunction(functionName, function, resultSerializer, argumentDeserializer);
 
-            foreach (var connection in GetAliveConnections())
+            foreach (var connection in GetAliveConnections((this.Options & GearmanWorkerOptions.GEARMAN_WORKER_NON_BLOCKING) != GearmanWorkerOptions.GEARMAN_WORKER_NON_BLOCKING))
             {
                 RegisterFunction(connection, functionName);
             }
@@ -81,7 +82,7 @@ namespace Twingly.Gearman
 
         public bool Work()
         {
-            var aliveConnections = GetAliveConnections();
+            var aliveConnections = GetAliveConnections((this.Options & GearmanWorkerOptions.GEARMAN_WORKER_NON_BLOCKING) != GearmanWorkerOptions.GEARMAN_WORKER_NON_BLOCKING);
 
             if (aliveConnections.Count() > 0)
             {
@@ -93,6 +94,10 @@ namespace Twingly.Gearman
             // if we didn't do any work because there weren't any, or because we didn't have any connections.
             throw new NoServerAvailableException("No job servers");
         }
+
+      public void AddOption(GearmanWorkerOptions opts) {
+        this.Options |= opts;
+      }
 
         protected bool Work(IGearmanConnection connection)
         {
@@ -110,7 +115,7 @@ namespace Twingly.Gearman
                 CallFunction(protocol, jobAssignment);
                 return true;
             }
-            catch (GearmanConnectionException)
+            catch (GearmanConnectionException ex)
             {
                 connection.MarkAsDead();
                 return false;
@@ -264,5 +269,10 @@ namespace Twingly.Gearman
                 throw new GearmanException("Failed to invoke the function dynamically", ex);
             }
         }
+
+    [Flags]
+      public enum GearmanWorkerOptions {
+      GEARMAN_WORKER_NON_BLOCKING = 1
+    }
     }
 }

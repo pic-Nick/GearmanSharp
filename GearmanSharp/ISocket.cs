@@ -10,6 +10,7 @@ namespace Twingly.Gearman
     public interface ISocket
     {
         bool Connected { get; }
+        bool BlockingMode { get; }
 
         void Connect(string host, int port);
         int Send(byte[] buffer);

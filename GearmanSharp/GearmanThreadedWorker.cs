@@ -14,6 +14,7 @@ namespace Twingly.Gearman
 
         protected volatile bool ContinueWorking = false;
         private readonly ManualResetEvent _resetEvent = new ManualResetEvent(false);
+        private readonly ManualResetEvent _suspendEvent = new ManualResetEvent(true);
         private readonly Thread _workLoopThread;
 
         public GearmanThreadedWorker()
@@ -37,7 +38,17 @@ namespace Twingly.Gearman
         {
             ContinueWorking = true;
             _resetEvent.Reset();
-            _workLoopThread.Start();
+            _suspendEvent.Set();
+            if (!_workLoopThread.IsAlive)
+              _workLoopThread.Start();
+        }
+
+        public void SuspendWorkLoop() {
+          _suspendEvent.Reset();
+        }
+
+        public void ResumeWorkLoop() {
+          _suspendEvent.Set();
         }
 
         /// <summary>
@@ -56,6 +67,7 @@ namespace Twingly.Gearman
         {
             ContinueWorking = false;
             _resetEvent.Set();
+            _suspendEvent.Set();
         }
 
         /// <summary>
@@ -86,11 +98,13 @@ namespace Twingly.Gearman
             var noJobCount = 0;
             while (ContinueWorking)
             {
-                try
-                {
-                    var aliveConnections = GetAliveConnections();
+                try {
+                    // If the worker is suspended then wait for a signal to resume.
+                    _suspendEvent.WaitOne();
 
-                    if (aliveConnections.Count() < 1)
+                    var aliveConnections = GetAliveConnections((this.Options & GearmanWorkerOptions.GEARMAN_WORKER_NON_BLOCKING) != GearmanWorkerOptions.GEARMAN_WORKER_NON_BLOCKING);
+
+                    if (!aliveConnections.Any())
                     {
                         // No servers available, sleep for a while and try again later
                         _resetEvent.WaitOne(_NO_SERVERS_SLEEP_TIME_MS, false);
@@ -118,7 +132,7 @@ namespace Twingly.Gearman
                         }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     // TODO: Logging framework?
                     ContinueWorking = false;

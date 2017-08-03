@@ -33,26 +33,8 @@ namespace Twingly.Gearman
         }
 
         public static GearmanClient CreateInstance(string servers) {
-          switch (servers) {
-            case null:
-              throw new ArgumentNullException("servers");
-            case "":
-              throw new ArgumentException("Parameter cann't be empty.", "servers");
-          }
-          GearmanClient jobServerCli = null;
-          var hosts = servers.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
-          if (hosts.Length > 0) {
-            jobServerCli = new GearmanClient();
-            foreach (var host in hosts) {
-              var parts = host.Split(':');
-              int port;
-              if (parts.Length == 2 && Int32.TryParse(parts[1], out port))
-                jobServerCli.AddServer(host, port);
-              else
-                jobServerCli.AddServer(host);
-            }
-          }
-          return jobServerCli;
+          GearmanClient jobServerCli = new GearmanClient();
+          return jobServerCli.AddServers(servers) ? jobServerCli : null;
         }
 
         public GearmanJobStatus GetStatus(GearmanJobRequest jobRequest)
