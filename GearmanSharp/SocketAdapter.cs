@@ -66,25 +66,53 @@ namespace Twingly.Gearman
         }
 
         public virtual int Send(byte[] buffer) {
-          var mre = new ManualResetEvent(false);
-          var stateObject = new StateObject { Handler = _socket, WaitObject = mre };
-          _socket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, ar => {
-            var so = (StateObject)ar.AsyncState;
-            try {
-              so.Result = so.Handler.EndSend(ar);
-            } catch (Exception ex) {
-              so.Exception = ex;
-            }
-            so.WaitObject.Set();
-          }, stateObject);
-          mre.WaitOne(_socket.SendTimeout);
-          if (stateObject.Exception != null)
-            throw stateObject.Exception;
-          return (int)stateObject.Result;
+          var offset = 0;
+          var size = buffer.Length;
+          var totalSent = 0;
+          while (size > 0) {
+            var sent = Send(buffer, offset, size);
+            size -= sent;
+            offset = sent;
+            totalSent += sent;
+          }
+          return totalSent;
+          //var mre = new ManualResetEvent(false);
+          //var stateObject = new StateObject { Handler = _socket, WaitObject = mre };
+          //_socket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, ar => {
+          //  var so = (StateObject)ar.AsyncState;
+          //  try {
+          //    so.Result = so.Handler.EndSend(ar);
+          //  } catch (Exception ex) {
+          //    so.Exception = ex;
+          //  }
+          //  so.WaitObject.Set();
+          //}, stateObject);
+          //mre.WaitOne(_socket.SendTimeout);
+          //if (stateObject.Exception != null)
+          //  throw stateObject.Exception;
+          //return (int)stateObject.Result;
           //return _socket.Send(buffer);
         }
 
-        public virtual int Receive(byte[] buffer, int size, SocketFlags socketFlags) {
+      private int Send(byte[] buffer, int offset, int size) {
+        var mre = new ManualResetEvent(false);
+        var stateObject = new StateObject { Handler = _socket, WaitObject = mre };
+        _socket.BeginSend(buffer, offset, size, SocketFlags.None, ar => {
+          var so = (StateObject)ar.AsyncState;
+          try {
+            so.Result = so.Handler.EndSend(ar);
+          } catch (Exception ex) {
+            so.Exception = ex;
+          }
+          so.WaitObject.Set();
+        }, stateObject);
+        mre.WaitOne(_socket.SendTimeout);
+        if (stateObject.Exception != null)
+          throw stateObject.Exception;
+        return (int)stateObject.Result;
+      }
+
+    public virtual int Receive(byte[] buffer, int size, SocketFlags socketFlags) {
           return this.Receive(buffer, 0, size, socketFlags);
           //int res;
           //var sw = new Stopwatch();
