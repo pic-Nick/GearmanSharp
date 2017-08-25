@@ -19,19 +19,19 @@ namespace Twingly.Gearman
 
         public GearmanThreadedWorker()
         {
-            _workLoopThread = new Thread(WorkLoopThreadProc);
+            _workLoopThread = new Thread(WorkLoopThreadProc) { Name = "GearmanWorkerThread-" + Guid.NewGuid() };
         }
 
         public GearmanThreadedWorker(string clusterName)
             : base(clusterName)
         {
-            _workLoopThread = new Thread(WorkLoopThreadProc);
+            _workLoopThread = new Thread(WorkLoopThreadProc) { Name = "GearmanWorkerThread-" + Guid.NewGuid() };
         }
 
         public GearmanThreadedWorker(ClusterConfigurationElement clusterConfiguration)
             : base(clusterConfiguration)
         {
-            _workLoopThread = new Thread(WorkLoopThreadProc);
+            _workLoopThread = new Thread(WorkLoopThreadProc) { Name = "GearmanWorkerThread-" + Guid.NewGuid() };
         }
 
         public void StartWorkLoop()

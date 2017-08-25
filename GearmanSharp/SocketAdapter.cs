@@ -1,6 +1,7 @@
 using System;
 using System.Net.Sockets;
 using System.Threading;
+using Twingly.Gearman.Exceptions;
 
 namespace Twingly.Gearman
 {
@@ -69,12 +70,18 @@ namespace Twingly.Gearman
           var offset = 0;
           var size = buffer.Length;
           var totalSent = 0;
-          while (size > 0) {
+          var tries = 0;
+          while (size > 0 && tries < 3) {
             var sent = Send(buffer, offset, size);
-            size -= sent;
-            offset = sent;
-            totalSent += sent;
+            if (sent == 0) tries++;
+            else {
+              size -= sent;
+              offset += sent;
+              totalSent += sent;
+            }
           }
+          if (tries >= 3)
+            throw new GearmanConnectionException("Unable to send packet - zero bytes sent. Exceeded tries count 3.");
           return totalSent;
           //var mre = new ManualResetEvent(false);
           //var stateObject = new StateObject { Handler = _socket, WaitObject = mre };
