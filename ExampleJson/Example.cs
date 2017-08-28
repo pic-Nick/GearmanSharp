@@ -28,8 +28,24 @@ namespace Twingly.Gearman.Examples
 
     class Example
     {
-        // This example uses the JSON.NET library for JSON serializaion/deserialization
-        [JsonObject]
+    public static byte[] JsonSerialize<T>(T data) where T : class {
+      if (data == null)
+        return null;
+
+      var jsonStr = JsonConvert.SerializeObject(data, Formatting.None, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
+      return Encoding.UTF8.GetBytes(jsonStr);
+    }
+
+    public static T JsonDeserialize<T>(byte[] data) where T : class {
+      if (data == null)
+        return null;
+
+      var jsonStr = Encoding.UTF8.GetString(data);
+      return JsonConvert.DeserializeObject<T>(jsonStr, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
+    }
+
+    // This example uses the JSON.NET library for JSON serializaion/deserialization
+    [JsonObject]
         public class OEmbed
         {
             public string Title { get; set; }
@@ -56,7 +72,7 @@ namespace Twingly.Gearman.Examples
             var urls = new List<string> { "http://www.youtube.com/watch?v=abc123456", "http://www.youtube.com/watch?v=xyz9876" };
             
             var oembeds = client.SubmitJob<IList<string>, IList<OEmbed>>("GetOEmbeds", urls,
-                Serializers.JsonSerialize<IList<string>>, Serializers.JsonDeserialize<IList<OEmbed>>, Timeout.Infinite);
+                JsonSerialize<IList<string>>, JsonDeserialize<IList<OEmbed>>, Timeout.Infinite);
         }
 
         public void SimpleWorker()
@@ -87,7 +103,7 @@ namespace Twingly.Gearman.Examples
             worker.SetClientId("my-client");
 
             worker.RegisterFunction<IList<string>, IList<OEmbed>>("GetOEmbeds", GetOembedsFunction,
-                Serializers.JsonDeserialize<IList<string>>, Serializers.JsonSerialize<IList<OEmbed>>);
+                JsonDeserialize<IList<string>>, JsonSerialize<IList<OEmbed>>);
             
             // start worker thread
             worker.StartWorkLoop();

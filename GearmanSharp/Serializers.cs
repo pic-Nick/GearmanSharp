@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
+﻿using System.Text;
 
 namespace Twingly.Gearman
 {
@@ -25,24 +21,6 @@ namespace Twingly.Gearman
                 return null;
 
             return Encoding.UTF8.GetString(data);
-        }
-
-        public static byte[] JsonSerialize<T>(T data) where T : class
-        {
-            if (data == null)
-                return null;
-
-            var jsonStr = JsonConvert.SerializeObject(data, Formatting.None, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
-            return Encoding.UTF8.GetBytes(jsonStr);
-        }
-
-        public static T JsonDeserialize<T>(byte[] data) where T : class
-        {
-            if (data == null)
-                return null;
-
-            var jsonStr = Encoding.UTF8.GetString(data);
-            return JsonConvert.DeserializeObject<T>(jsonStr, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
         }
     }
 }
