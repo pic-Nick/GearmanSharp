@@ -47,9 +47,9 @@ namespace Twingly.Gearman
             }
             so.WaitObject.Set();
           }, stateObject);
-          mre.WaitOne(_socket.ReceiveTimeout);
-          if (stateObject.Exception != null)
-            throw stateObject.Exception;
+          var isReceived = mre.WaitOne(_socket.ReceiveTimeout);
+          if (stateObject.Exception != null || !isReceived)
+            throw stateObject.Exception ?? new TimeoutException("Timeout occured while waiting for socket to connect.");
           //try {
           //  _socket.Connect(host, port);
           //} catch (SocketException ex) {
@@ -113,9 +113,9 @@ namespace Twingly.Gearman
           }
           so.WaitObject.Set();
         }, stateObject);
-        mre.WaitOne(_socket.SendTimeout);
-        if (stateObject.Exception != null)
-          throw stateObject.Exception;
+        var isReceived = mre.WaitOne(_socket.SendTimeout);
+        if (stateObject.Exception != null || !isReceived)
+          throw stateObject.Exception ?? new TimeoutException("Timeout occured while waiting for socket to send data.");
         return (int)stateObject.Result;
       }
 
@@ -153,9 +153,9 @@ namespace Twingly.Gearman
             }
             so.WaitObject.Set();
           }, stateObject);
-          mre.WaitOne(_socket.ReceiveTimeout);
-          if (stateObject.Exception != null)
-            throw stateObject.Exception;
+          var isReceived = mre.WaitOne(_socket.ReceiveTimeout);
+          if (stateObject.Exception != null || !isReceived)
+            throw stateObject.Exception ?? new TimeoutException("Timeout occured while waiting for socket to receive data.");
           return (int)stateObject.Result;
 
           //int res;
@@ -191,9 +191,9 @@ namespace Twingly.Gearman
             }
             so.WaitObject.Set();
           }, stateObject);
-          mre.WaitOne(_socket.ReceiveTimeout);
-          if (stateObject.Exception != null)
-            throw stateObject.Exception;
+          var isReceived = mre.WaitOne(_socket.ReceiveTimeout);
+          if (stateObject.Exception != null || !isReceived)
+            throw stateObject.Exception ?? new TimeoutException("Timeout occured while waiting for socket to disconnect.");
     }
 
     public virtual void Close()
