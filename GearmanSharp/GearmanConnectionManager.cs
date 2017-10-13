@@ -10,7 +10,7 @@ namespace Twingly.Gearman
 {
     public abstract class GearmanConnectionManager : IDisposable
     {
-        private const int _DEFAULT_PORT = 4730;
+        internal const int _DEFAULT_PORT = 4730;
 
         private readonly IList<IGearmanConnection> _connections;
         private IGearmanConnectionFactory _connectionFactory;

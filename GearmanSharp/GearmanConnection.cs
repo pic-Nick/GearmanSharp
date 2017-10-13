@@ -51,6 +51,8 @@ namespace Twingly.Gearman
             _isDead = false;
         }
 
+        public GearmanConnection(string host) : this(host, GearmanConnectionManager._DEFAULT_PORT) { }
+
         public bool IsDead()
         {
             if (_isDead && DateTime.Now >= _nextRetry)

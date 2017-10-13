@@ -49,7 +49,7 @@ namespace Twingly.Gearman
           }, stateObject);
           var isReceived = mre.WaitOne(_socket.ReceiveTimeout);
           if (stateObject.Exception != null || !isReceived)
-            throw stateObject.Exception ?? new TimeoutException("Timeout occured while waiting for socket to connect.");
+            throw stateObject.Exception ?? new SocketException((int)SocketError.TimedOut);
           //try {
           //  _socket.Connect(host, port);
           //} catch (SocketException ex) {
@@ -115,7 +115,7 @@ namespace Twingly.Gearman
         }, stateObject);
         var isReceived = mre.WaitOne(_socket.SendTimeout);
         if (stateObject.Exception != null || !isReceived)
-          throw stateObject.Exception ?? new TimeoutException("Timeout occured while waiting for socket to send data.");
+          throw stateObject.Exception ?? new SocketException((int)SocketError.TimedOut);
         return (int)stateObject.Result;
       }
 
@@ -155,7 +155,7 @@ namespace Twingly.Gearman
           }, stateObject);
           var isReceived = mre.WaitOne(_socket.ReceiveTimeout);
           if (stateObject.Exception != null || !isReceived)
-            throw stateObject.Exception ?? new TimeoutException("Timeout occured while waiting for socket to receive data.");
+            throw stateObject.Exception ?? new SocketException((int)SocketError.TimedOut);
           return (int)stateObject.Result;
 
           //int res;
@@ -193,7 +193,7 @@ namespace Twingly.Gearman
           }, stateObject);
           var isReceived = mre.WaitOne(_socket.ReceiveTimeout);
           if (stateObject.Exception != null || !isReceived)
-            throw stateObject.Exception ?? new TimeoutException("Timeout occured while waiting for socket to disconnect.");
+            throw stateObject.Exception ?? new SocketException((int)SocketError.TimedOut);
     }
 
     public virtual void Close()

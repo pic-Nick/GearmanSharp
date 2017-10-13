@@ -42,6 +42,21 @@ namespace Twingly.Gearman
             return new GearmanClientProtocol(jobRequest.Connection).GetStatus(jobRequest.JobHandle);
         }
 
+        public GearmanJobStatus GetStatus(string host, string jobHandle) {
+            return GetStatus(host, _DEFAULT_PORT, jobHandle);
+        }
+
+        public GearmanJobStatus GetStatus(string host, int port, string jobHandle)
+        {
+            var connection = new GearmanConnection(host, port);
+            connection.Connect();
+            try {
+                return GetStatus(new GearmanJobRequest(connection, jobHandle));
+            } finally {
+                connection.Disconnect();
+            }
+        }
+
         public byte[] SubmitJob(string functionName, byte[] functionArgument)
         {
             return SubmitJob(functionName, functionArgument, Guid.NewGuid().ToString(), GearmanJobPriority.Normal);
