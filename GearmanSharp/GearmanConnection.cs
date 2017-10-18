@@ -183,5 +183,19 @@ namespace Twingly.Gearman
         {
             return _socket != null && _socket.Connected;
         }
+
+      #region Implementation of ICloneable
+
+      /// <inheritdoc />
+      public object Clone() {
+        var clone = new GearmanConnection(this.Host, this.Port) {
+          BlockingMode = this.BlockingMode,
+          ReceiveTimeout = this.ReceiveTimeout,
+          SendTimeout = this.SendTimeout
+        };
+        return clone;
+      }
+
+      #endregion
     }
 }

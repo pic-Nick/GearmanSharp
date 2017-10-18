@@ -1,10 +1,11 @@
+using System;
 using System.Linq;
 using System.Linq.Expressions;
 using Twingly.Gearman.Packets;
 
 namespace Twingly.Gearman
 {
-    public interface IGearmanConnection
+    public interface IGearmanConnection: ICloneable
     {
         object SyncObject { get; }
         void Connect();

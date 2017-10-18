@@ -107,7 +107,7 @@ namespace Twingly.Gearman
               } catch (GearmanConnectionException ex) {
                 var inner = ex.InnerException as SocketException;
                 if (inner != null && inner.SocketErrorCode == SocketError.TimedOut) {
-                  var response = SendGetStatus(jobHandle);
+                  var response = SendGetStatus(jobHandle, true);
                   switch (response.Type) {
                     case PacketType.STATUS_RES:
                       var jobStatus = UnpackStatusResponse(response);
@@ -187,11 +187,20 @@ namespace Twingly.Gearman
         return workDone;
       }
 
-      private IResponsePacket SendGetStatus(string jobHandle) {
+      private IResponsePacket SendGetStatus(string jobHandle, bool createNewConnection = false) {
         IResponsePacket response;
-        lock (Connection.SyncObject) {
-          Connection.SendPacket(new RequestPacket(PacketType.GET_STATUS, Encoding.UTF8.GetBytes(jobHandle)));
-          response = Connection.GetNextPacket();
+        IGearmanConnection connection;
+        if (createNewConnection) {
+          connection = (IGearmanConnection)Connection.Clone();
+          connection.Connect();
+        } else
+          connection = Connection;
+        try {
+          connection.SendPacket(new RequestPacket(PacketType.GET_STATUS, Encoding.UTF8.GetBytes(jobHandle)));
+          response = connection.GetNextPacket();
+        } finally {
+          if (createNewConnection)
+            connection.Disconnect();
         }
         return response;
       }
