@@ -196,8 +196,10 @@ namespace Twingly.Gearman
         } else
           connection = Connection;
         try {
-          connection.SendPacket(new RequestPacket(PacketType.GET_STATUS, Encoding.UTF8.GetBytes(jobHandle)));
-          response = connection.GetNextPacket();
+          lock (connection.SyncObject) {
+            connection.SendPacket(new RequestPacket(PacketType.GET_STATUS, Encoding.UTF8.GetBytes(jobHandle)));
+            response = connection.GetNextPacket();
+          }
         } finally {
           if (createNewConnection)
             connection.Disconnect();

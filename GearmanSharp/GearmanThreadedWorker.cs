@@ -61,7 +61,7 @@ namespace Twingly.Gearman
         }
         
         /// <summary>
-        /// Tells the worker thread to stop and then joins the thread.
+        /// Tells the worker thread to stop without joining the thread.
         /// </summary>
         public void SignalWorkerThreadToStop()
         {
