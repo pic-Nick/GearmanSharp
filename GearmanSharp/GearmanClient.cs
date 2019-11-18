@@ -37,12 +37,24 @@ namespace Twingly.Gearman
           return jobServerCli.AddServers(servers) ? jobServerCli : null;
         }
 
-        public GearmanJobStatus GetStatus(GearmanJobRequest jobRequest)
+        public GearmanJobStatus GetStatus(GearmanJobRequest jobRequest, bool createNewConnection = false)
         {
-            return new GearmanClientProtocol(jobRequest.Connection).GetStatus(jobRequest.JobHandle);
+            IGearmanConnection connection;
+            if (createNewConnection) {
+              connection = (IGearmanConnection)jobRequest.Connection.Clone();
+              connection.Connect();
+            } else
+              connection = jobRequest.Connection;
+            try {
+                return new GearmanClientProtocol(connection).GetStatus(jobRequest.JobHandle);
+            } finally {
+              if (createNewConnection)
+                connection.Disconnect();
+            }
         }
 
-        public GearmanJobStatus GetStatus(string host, string jobHandle) {
+        public GearmanJobStatus GetStatus(string host, string jobHandle)
+        {
             return GetStatus(host, _DEFAULT_PORT, jobHandle);
         }
 

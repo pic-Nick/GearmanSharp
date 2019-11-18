@@ -4,7 +4,9 @@ namespace Twingly.Gearman
 {
     public interface IGearmanClient : IDisposable, IGearmanClientEventHandler
     {
-        GearmanJobStatus GetStatus(GearmanJobRequest jobRequest);
+        GearmanJobStatus GetStatus(GearmanJobRequest jobRequest, bool createNewConnection = false);
+        GearmanJobStatus GetStatus(string host, string jobHandle);
+        GearmanJobStatus GetStatus(string host, int port, string jobHandle);
 
         byte[] SubmitJob(string functionName, byte[] functionArgument);
         byte[] SubmitJob(string functionName, byte[] functionArgument, string uniqueId, GearmanJobPriority priority);
