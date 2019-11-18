@@ -125,7 +125,7 @@ namespace Twingly.Gearman
                 if (inner == null)
                   throw;
                 if (timeout != Timeout.Infinite && t.Elapsed.TotalSeconds > timeout)
-                  break;
+                  throw;
               }
             }
           } finally {
