@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using Twingly.Gearman.Exceptions;
 using Twingly.Gearman.Packets;
 
@@ -114,6 +113,10 @@ namespace Twingly.Gearman
             {
                 _socket.Send(p.ToByteArray());
             }
+            catch (NullReferenceException e)
+            {
+                throw new GearmanConnectionException("Unable to send packet. Socket object not initialized or already disposed", e);
+            }
             catch (Exception e)
             {
                 throw new GearmanConnectionException("Unable to send packet", e);
@@ -147,6 +150,10 @@ namespace Twingly.Gearman
                 }
 
                 return new ResponsePacket(packetType, packetData);
+            }
+            catch (NullReferenceException e)
+            {
+                throw new GearmanConnectionException("Error reading data from socket. Socket object not initialized or already disposed", e);
             }
             catch (Exception e)
             {
